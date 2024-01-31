@@ -1,0 +1,34 @@
+<html>
+<head>
+    <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-5NNG36R3');</script>
+<!-- End Google Tag Manager -->
+</head>
+<body>
+    <!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5NNG36R3"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<h2>Trigger a custom event here</h2><br>
+<table> 
+<tr><td>category:</td><td><input id="cat" value="user-interaction"></input></td></tr>
+<tr><td>action:</td><td><input id="act" value="click"></input></td></tr>
+<tr><td>value:</td><td><input id="val" value=4></input></td></tr>
+</table>
+<button onclick="submitEvent()">submit</button>
+</body>
+</html>
+
+<script>
+ function submitEvent() {
+    dataLayer.push({"event":"customEvent", 
+                "event-category": document.getElementById('cat').value, 
+                "event-action": document.getElementById('act').value, 
+                "event-value": document.getElementById('val').value})
+            }
+        </script>
