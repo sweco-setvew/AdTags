@@ -1,1 +1,553 @@
-h
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Spell Tarot Card Generator — Export PNG (with art)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />ö
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --card-w: 360px;
+      --card-h: 560px;
+      --accent: #b88a3d;
+      --bg: #f6f2ea;
+      --ink: #2a2a2a;
+      --frame: rgba(15,10,8,0.9);
+      --muted: #6b5a4d;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      gap:20px;
+      align-items:flex-start;
+      justify-content:center;
+      padding:28px;
+      background:linear-gradient(180deg,#efe7dd,#efe7dd 50%,#e7ded1);
+      font-family: "Crimson Text", serif;
+      color:var(--ink);
+    }
+
+    .controls{
+      max-width:480px;
+      width:100%;
+      padding:16px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,240,230,0.98));
+      border-radius:12px;
+      box-shadow:0 6px 22px rgba(20,20,20,0.12);
+      border:1px solid rgba(0,0,0,0.06);
+    }
+    .controls h2{ margin:0 0 12px 0; font-family: "Cinzel", serif; letter-spacing:1px; font-size:18px; }
+    .field{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+    label{ font-size:13px; color:#463d36; }
+    input[type="text"], input[type="url"], input[type="number"], textarea, select{
+      font-family:inherit; font-size:14px; padding:8px 10px; border-radius:8px;
+      border:1px solid rgba(50,40,30,0.12); background:white; resize:vertical;
+    }
+    textarea{ min-height:120px; }
+    .row{ display:flex; gap:10px; }
+    .row .field{ flex:1; }
+    .tiny{ display:flex; align-items:center; gap:8px; font-size:13px; margin-top:8px; }
+
+    button{
+      background:linear-gradient(180deg,var(--accent), #a56f2e); color:white; border:0;
+      padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer;
+      box-shadow:0 6px 14px rgba(90,50,10,0.18);
+    }
+    .small-btn{ background:transparent; border:1px solid rgba(0,0,0,0.08); color:#3b2f27; font-weight:600; padding:8px 10px; border-radius:8px; box-shadow:none; }
+    .controls .foot{ display:flex; gap:8px; align-items:center; margin-top:12px; }
+
+    /* Card */
+    .canvas{ width:var(--card-w); min-height:var(--card-h); display:flex; align-items:center; justify-content:center; }
+    .card{
+      width:var(--card-w); height:var(--card-h); background: var(--bg);
+      border-radius:18px; padding:14px; box-sizing:border-box; position:relative;
+      box-shadow: 0 18px 40px rgba(20,20,20,0.25); border:6px solid transparent; overflow:hidden;
+    }
+
+    .card::before{
+      content:""; position:absolute; inset:0; border-radius:22px; padding:6px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03)) padding-box,
+        conic-gradient(from 140deg at 50% 50%, #ecd8b6, #d3b47a, #cfa46b, #d7b182) border-box;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude; pointer-events:none; z-index:3;
+    }
+
+    .card-inner{ position:relative; width:100%; height:100%; padding:6px; display:flex; flex-direction:column; align-items:center; z-index:4; }
+
+    .card-title{ font-family:"Cinzel", serif; font-weight:700; letter-spacing:2px; text-transform:uppercase; font-size:20px; margin:6px 0 8px 0; text-align:center; color:var(--frame); width:94%; }
+    .subtitle{ margin:0 0 10px 0; font-size:13px; color:#5b4b3f; text-align:center; }
+
+    .art{
+      width:86%;
+      height:28%;
+      border-radius:12px;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(180deg,#efe8dd,#ddd0b8);
+      border:1px solid rgba(0,0,0,0.06);
+      box-shadow:inset 0 6px 18px rgba(0,0,0,0.06);
+    }
+    .art img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+    .meta-bar{
+      margin-top:10px;
+      width:92%;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:13px;
+      color:#4a3d33;
+      gap:8px;
+    }
+
+    .level-pill{
+      background:linear-gradient(180deg,rgba(255,255,255,0.4), rgba(0,0,0,0.02));
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,0.06);
+      font-weight:700;
+    }
+
+    .school{
+      font-style:italic;
+      text-transform:capitalize;
+      padding:6px 10px;
+      border-radius:8px;
+      color:#2b2b2b;
+    }
+
+    .concentration{
+      font-size:12px;
+      color:#7a2a2a;
+      background:rgba(122,42,42,0.06);
+      border:1px solid rgba(122,42,42,0.12);
+      padding:6px 8px;
+      border-radius:8px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .rules{
+      margin-top:12px;
+      width:92%;
+      flex:1;
+      overflow:auto;
+      background:linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0.18));
+      padding:12px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,0.04);
+      text-align:left;
+      font-size:15px;
+      line-height:1.45;
+      color: #222;
+      white-space:normal;
+    }
+
+    .rules h1, .rules h2, .rules h3 { font-family: "Cinzel", serif; margin:6px 0; color:var(--frame) }
+    .rules p { margin:8px 0; }
+    .rules ul, .rules ol { padding-left:1.05em; margin:6px 0; }
+    .rules code { background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:6px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-size:13px; }
+    .rules pre { background:rgba(0,0,0,0.06); padding:8px; border-radius:8px; overflow:auto; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-size:13px; }
+    .rules a { color:#2b6db3; text-decoration:underline; }
+
+    .footer{
+      width:92%;
+      display:flex;
+      justify-content:space-between;
+      font-size:16px;
+      font-family: "Cinzel", serif;
+      font-weight: bold;
+      margin-top:10px;
+      color:#54443a;
+      align-items:center;
+    }
+
+    .small-note{ letter-spacing:1px; color:var(--muted); }
+    .status{ font-size:13px; color:#3b2f27; margin-left:10px; }
+
+    @media (max-width:920px){
+      body{flex-direction:column; align-items:center;}
+      .controls{order:2}
+      .canvas{order:1}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="controls" role="region" aria-label="Spell inputs">
+    <h2>Spell Tarot Card Builder</h2>
+
+    <div class="field">
+      <label for="title">Title</label>
+      <input id="title" type="text" placeholder="Fireball" value="Fireball">
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="casting">Casting Time</label>
+        <select id="casting">
+          <option>Action</option>
+          <option>Bonus Action</option>
+          <option>Reaction</option>
+          <option>1 Minute</option>
+          <option>10 Minutes</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="level">Spell Level (0-9)</label>
+        <input id="level" type="number" min="0" max="9" value="3">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="school">Spell School</label>
+      <select id="school">
+        <option>Evocation</option>
+        <option>Abjuration</option>
+        <option>Conjuration</option>
+        <option>Divination</option>
+        <option>Enchantment</option>
+        <option>Illusion</option>
+        <option>Necromancy</option>
+        <option>Transmutation</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="image">Image (URL or upload)</label>
+      <input id="image" type="url" placeholder="https://...">
+      <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+        <input id="file" type="file" accept="image/*" style="flex:1">
+        <button id="useFile" class="small-btn" type="button">Use file</button>
+        <button id="embedUrl" class="small-btn" type="button">Embed URL</button>
+      </div>
+      <div style="margin-top:6px;"><span id="imgStatus" class="status" aria-live="polite"></span></div>
+    </div>
+
+    <div class="field">
+      <label for="rules">Rule Text (supports Markdown)</label>
+      <textarea id="rules" placeholder="Markdown supported. Use **bold**, *italic*, lists, or fenced code.">A bright streak flashes from your pointing finger to a point you choose within range and then blossoms with a low roar into an explosion of flame.
+
+- Each creature in a 20-foot-radius sphere centered on that point must make a **Dexterity** saving throw.
+- A target takes 8d6 fire damage on a failed save, or half as much on a successful one.
+
+> At Higher Levels: The fireball's damage increases by 1d6 for each slot level above 3rd.
+
+Usage example:
+```txt
+Cast as an Action, 150 feet range.
+```</textarea>
+    </div>
+
+    <div class="tiny">
+      <input id="concentration" type="checkbox">
+      <label for="concentration">Requires concentration</label>
+    </div>
+
+    <div class="foot">
+      <button id="gen">Update Preview</button>
+      <button id="reset" type="button" class="small-btn">Reset</button>
+      <button id="export" type="button" style="margin-left:auto;">Export to PNG</button>
+      <span id="exportStatus" class="status" aria-live="polite"></span>
+    </div>
+  </div>
+
+  <div class="canvas" aria-live="polite">
+    <div class="card" id="card">
+      <div class="card-inner">
+        <div class="concentration" id="conc2" style="display:none; position: absolute; left: -9px;top: -10px; font-weight: bold; font-size: 21px;">C</div>
+        <div class="concentration" id="conc3" style="display:none; position: absolute; right: -9px;top: -10px; font-weight: bold; font-size: 21px;">C</div>
+        <div class="card-title" id="cardTitle">Fireball</div>
+        <div style="display: none" class="subtitle" id="sub">Evocation • Action</div>
+
+        <div class="art" id="art">
+          <img id="artImg" alt="Spell art" src="">
+        </div>
+
+        <div class="meta-bar">
+          <div style="display: none" class="level-pill" id="lvl">3</div>
+          <div class="school" id="sch">Evocation</div>
+          <div class="concentration" id="conc" style="display:none;; position: absolute; left: 108px">⚠ Concentration ⚠</div>
+        </div>
+
+        <div class="rules" id="rulesOut"></div>
+
+        <div class="footer">
+          <div class="small-note" id="castingOut">Action</div>
+          <div style="opacity:0.9;">Level <span id="levelOut">3</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.min.js"></script>
+
+<script>
+  // Elements
+  const titleIn = document.getElementById('title');
+  const castingIn = document.getElementById('casting');
+  const levelIn = document.getElementById('level');
+  const schoolIn = document.getElementById('school');
+  const imageIn = document.getElementById('image');
+  const fileIn = document.getElementById('file');
+  const useFileBtn = document.getElementById('useFile');
+  const embedUrlBtn = document.getElementById('embedUrl');
+  const rulesIn = document.getElementById('rules');
+  const concIn = document.getElementById('concentration');
+
+  const artImg = document.getElementById('artImg');
+  const artWrapper = document.getElementById('art');
+  const cardTitle = document.getElementById('cardTitle');
+  const sub = document.getElementById('sub');
+  const lvl = document.getElementById('lvl');
+  const sch = document.getElementById('sch');
+  const conc = document.getElementById('conc');
+  const conc2 = document.getElementById('conc2');
+  const conc3 = document.getElementById('conc3');
+  const rulesOut = document.getElementById('rulesOut');
+  const castingOut = document.getElementById('castingOut');
+  const levelOut = document.getElementById('levelOut');
+  const exportBtn = document.getElementById('export');
+  const exportStatus = document.getElementById('exportStatus');
+  const imgStatus = document.getElementById('imgStatus');
+
+  // Markdown + sanitizer config
+  marked.setOptions({ gfm: true, breaks: true, smartLists: true, smartypants: false });
+  const allowedTags = ['p','strong','em','ul','ol','li','code','pre','a','blockquote','h1','h2','h3','br','hr','del','ins'];
+  const allowedAttrs = ['href','title','target','rel'];
+
+  // track if art image is embedded as data: URL (export-safe)
+  let artIsEmbedded = false;
+
+  function render() {
+    const title = titleIn.value.trim() || "Untitled";
+    const casting = castingIn.value;
+    let level = parseInt(levelIn.value, 10);
+    if (isNaN(level) || level < 0) level = 0;
+    if (level > 9) level = 9;
+    const school = schoolIn.value || "";
+    const imageUrl = imageIn.value.trim();
+    const rules = rulesIn.value || "";
+    const concentration = concIn.checked;
+
+    // Title & meta
+    cardTitle.textContent = title;
+    sub.textContent = (school ? school : "Unknown") + " • " + casting;
+    lvl.textContent = (level === 0 ? "Cantrip" : "Level " + level);
+    levelOut.textContent = level === 0 ? "0 (Cantrip)" : level;
+    sch.textContent = school;
+    castingOut.textContent = casting;
+
+    // Markdown render + sanitize (marked with breaks:true preserves linebreaks)
+    try {
+      const rawHtml = marked.parse(rules);
+      const clean = DOMPurify.sanitize(rawHtml, { ALLOWED_TAGS: allowedTags, ALLOWED_ATTR: allowedAttrs });
+      rulesOut.innerHTML = clean || '<em>(No description)</em>';
+      rulesOut.querySelectorAll('a').forEach(a=>{
+        const href = a.getAttribute('href') || '';
+        if (/^https?:\/\//i.test(href)) {
+          a.setAttribute('target','_blank');
+          a.setAttribute('rel','noopener noreferrer');
+        } else {
+          a.setAttribute('rel','noopener noreferrer');
+          a.removeAttribute('target');
+        }
+      });
+    } catch (e) {
+      rulesOut.textContent = rules;
+      rulesOut.style.whiteSpace = 'pre-wrap';
+    }
+
+    // Art handling
+    artImg.onload = () => {
+      artWrapper.style.background = '';
+      artImg.style.display = 'block';
+      imgStatus.textContent = artIsEmbedded ? 'Using embedded image (export-safe)' : 'Using URL (may fail on export if server blocks CORS)';
+    };
+    artImg.onerror = () => {
+      artImg.style.display = 'none';
+      artWrapper.style.background = "linear-gradient(180deg,#efe8dd,#ddd0b8)";
+      if (!imageUrl) imgStatus.textContent = '';
+      else imgStatus.textContent = 'Image failed to load';
+    };
+
+    if (artIsEmbedded) {
+      // artImg.src already set to data: URL by file or embed function
+      artImg.removeAttribute('crossorigin');
+    } else {
+      if (!imageUrl) {
+        artImg.removeAttribute('src');
+        artImg.style.display = 'none';
+        artWrapper.style.background = "linear-gradient(180deg,#efe8dd,#ddd0b8)";
+        imgStatus.textContent = '';
+      } else {
+        try { artImg.setAttribute('crossorigin','anonymous'); } catch(e){}
+        artImg.src = imageUrl;
+        imgStatus.textContent = 'Using URL (may fail on export if server blocks CORS)';
+      }
+    }
+
+    conc.style.display = concentration ? 'flex' : 'none';
+    conc2.style.display = concentration ? 'flex' : 'none';
+    conc3.style.display = concentration ? 'flex' : 'none';
+    exportStatus.textContent = '';
+  }
+
+  // Use a local file as embedded data URL (export-safe)
+  function useFileAsEmbedded(file) {
+    if (!file) {
+      imgStatus.textContent = 'No file selected';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      artIsEmbedded = true;
+      artImg.src = reader.result;
+      imageIn.value = '';
+      imgStatus.textContent = 'Loaded local file (export-safe)';
+    };
+    reader.onerror = () => {
+      imgStatus.textContent = 'Failed to read file';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Attempt to fetch the URL and embed as data URL (only works if remote server allows CORS)
+  async function embedUrlToData(url) {
+    if (!url) {
+      imgStatus.textContent = 'No URL provided';
+      return;
+    }
+    imgStatus.textContent = 'Attempting to fetch and embed...';
+    try {
+      const res = await fetch(url, { mode: 'cors', cache: 'no-store' });
+      if (!res.ok) throw new Error('Fetch failed: ' + res.status);
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = () => {
+        artIsEmbedded = true;
+        artImg.removeAttribute('crossorigin');
+        artImg.src = reader.result;
+        imageIn.value = '';
+        imgStatus.textContent = 'Embedded URL as data-URL (export-safe)';
+      };
+      reader.onerror = () => {
+        imgStatus.textContent = 'Failed to convert response to data URL';
+      };
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      console.error(err);
+      artIsEmbedded = false;
+      imgStatus.textContent = 'Embed failed — remote server likely disallows cross-origin reads (CORS).';
+      alert('Embedding failed. The remote server probably does not allow cross-origin requests, so the image cannot be fetched by the browser. Upload a local file (choose a file and click "Use file") or use a URL to an image host that supports CORS.');
+      render(); // fallback to showing URL image if present
+    }
+  }
+
+  // Buttons
+  useFileBtn.addEventListener('click', () => {
+    const f = fileIn.files && fileIn.files[0];
+    if (!f) {
+      imgStatus.textContent = 'No file selected';
+      return;
+    }
+    useFileAsEmbedded(f);
+  });
+
+  embedUrlBtn.addEventListener('click', async () => {
+    const url = imageIn.value.trim();
+    await embedUrlToData(url);
+  });
+
+  document.getElementById('gen').addEventListener('click', e => { e.preventDefault(); artIsEmbedded = artIsEmbedded || false; render(); });
+  document.getElementById('reset').addEventListener('click', ()=>{
+    titleIn.value = "Fireball";
+    castingIn.value = "Action";
+    levelIn.value = 3;
+    schoolIn.value = "Evocation";
+    imageIn.value = "";
+    fileIn.value = "";
+    rulesIn.value = "A bright streak flashes from your pointing finger to a point you choose within range and then blossoms with a low roar into an explosion of flame.\n\n- Each creature in a 20-foot-radius sphere centered on that point must make a **Dexterity** saving throw.\n\n> At Higher Levels: The fireball's damage increases by 1d6 for each slot level above 3rd.\n\n```txt\nCast as an Action, 150 feet range.\n```";
+    concIn.checked = false;
+    artIsEmbedded = false;
+    imgStatus.textContent = '';
+    render();
+  });
+
+  // Live updates
+  ['input','change'].forEach(ev=>{
+    titleIn.addEventListener(ev, render);
+    castingIn.addEventListener(ev, render);
+    levelIn.addEventListener(ev, render);
+    schoolIn.addEventListener(ev, render);
+    imageIn.addEventListener(ev, () => { artIsEmbedded = false; imgStatus.textContent = ''; render(); });
+    rulesIn.addEventListener(ev, render);
+    concIn.addEventListener(ev, render);
+  });
+
+  // Export to PNG using html-to-image v1.11.13
+  exportBtn.addEventListener('click', async function() {
+    const node = document.getElementById('card');
+    exportStatus.textContent = 'Preparing...';
+    exportBtn.disabled = true;
+    try {
+      // find library
+      const hti = (typeof htmlToImage !== 'undefined') ? htmlToImage : (window && window.htmlToImage ? window.htmlToImage : null);
+      if (!hti || typeof hti.toPng !== 'function') {
+        throw new Error('html-to-image library not found (expected global "htmlToImage").');
+      }
+
+      const scale = 2; // increase for higher quality
+      const opts = {
+        backgroundColor: null,
+        useCORS: true,
+        cacheBust: true,
+        width: node.offsetWidth * scale,
+        height: node.offsetHeight * scale,
+        style: {
+          transform: 'scale(' + scale + ')',
+          transformOrigin: 'top left',
+          width: node.offsetWidth + 'px',
+          height: node.offsetHeight + 'px'
+        }
+      };
+
+      // If art is remote and not embedded, html-to-image may fail due to CORS restrictions.
+      // If you used "Use file" or successful "Embed URL", artIsEmbedded will be true and export should succeed.
+      const dataUrl = await hti.toPng(node, opts);
+
+      const link = document.createElement('a');
+      const safeName = (cardTitle.textContent || 'spell-card').replace(/[^a-z0-9_\-\. ]/gi, '_');
+      link.download = safeName + '.png';
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      exportStatus.textContent = 'Export complete';
+    } catch (err) {
+      console.error('Export error', err);
+      exportStatus.textContent = 'Export failed';
+      let msg = (err && err.message) ? err.message : 'See console for details.';
+      msg += '\nIf you used an image URL, the remote server may deny cross-origin access. Workarounds:\n- Upload a local image and click "Use file".\n- Click "Embed URL" to attempt fetching the image (only works if the server allows CORS).\n- Remove the image URL and try exporting.';
+      alert('Export failed: ' + msg);
+    } finally {
+      exportBtn.disabled = false;
+      setTimeout(()=>{ exportStatus.textContent = ''; }, 5000);
+    }
+  });
+
+  // initial render
+  render();
+</script>
+</body>
+</html>
